@@ -93,3 +93,37 @@ export async function getSchools() {
         }
     })
 }
+
+export async function getSchoolDetails() {
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return null
+
+    return await prisma.school.findUnique({
+        where: { id: schoolId }
+    })
+}
+
+export async function updateSchool(formData: FormData) {
+    const session = await auth()
+    if (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'DIRECTOR') {
+        return { success: false, message: "Unauthorized" }
+    }
+
+    const schoolId = (session.user as any).schoolId
+    const name = formData.get("name") as string
+    const address = formData.get("address") as string
+    const phone = formData.get("phone") as string
+    const email = formData.get("email") as string
+
+    try {
+        await prisma.school.update({
+            where: { id: schoolId },
+            data: { name, address, phone, email }
+        })
+        revalidatePath("/dashboard/settings")
+        return { success: true, message: "School settings updated successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to update school settings" }
+    }
+}

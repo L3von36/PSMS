@@ -139,6 +139,10 @@ export async function getStudents() {
         if (['ADMIN', 'DIRECTOR', 'REGISTRAR'].includes(role)) {
             const students = await prisma.student.findMany({
                 where: { schoolId },
+                include: {
+                    attendances: { orderBy: { date: 'desc' }, take: 10 },
+                    grades: { orderBy: { createdAt: 'desc' }, take: 10, include: { subject: true } }
+                },
                 orderBy: { createdAt: 'desc' }
             })
             return { success: true, students }
@@ -166,6 +170,10 @@ export async function getStudents() {
                 where: {
                     schoolId,
                     OR: conditions as any
+                },
+                include: {
+                    attendances: { orderBy: { date: 'desc' }, take: 10 },
+                    grades: { orderBy: { createdAt: 'desc' }, take: 10, include: { subject: true } }
                 },
                 orderBy: { createdAt: 'desc' }
             })

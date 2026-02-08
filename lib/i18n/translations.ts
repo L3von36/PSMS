@@ -16,6 +16,10 @@ export const translations = {
         total_students: "Total Students",
         total_revenue: "Total Revenue",
         recent_payments: "Recent Payments",
+        id_cards: "ID Cards",
+        payroll_management: "Payroll Management",
+        inventory_management: "Inventory Management",
+        academic_performance: "Academic Performance",
     },
     am: {
         dashboard: "ዳሽቦርድ",
@@ -34,6 +38,10 @@ export const translations = {
         total_students: "ጠቅላላ ተማሪዎች",
         total_revenue: "ጠቅላላ ገቢ",
         recent_payments: "የቅርብ ጊዜ ክፍያዎች",
+        id_cards: "የመታወቂያ ካርዶች",
+        payroll_management: "የደመወዝ አስተዳደር",
+        inventory_management: "የንብረት አስተዳደር",
+        academic_performance: "የትምህርት ውጤት",
     }
 }
 

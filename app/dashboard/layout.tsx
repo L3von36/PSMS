@@ -25,6 +25,7 @@ export default async function DashboardLayout({
     { name: 'Grades', href: '/dashboard/grades', icon: GraduationCap, roles: ['ADMIN', 'DIRECTOR', 'UNIT_LEADER', 'TEACHER', 'STUDENT', 'PARENT'] },
     { name: 'Exam Bank', href: '/dashboard/exams', icon: FileQuestion, roles: ['ADMIN', 'DIRECTOR', 'UNIT_LEADER', 'TEACHER'] },
     { name: 'ID Cards', href: '/dashboard/id-cards', icon: CreditCard, roles: ['ADMIN', 'DIRECTOR', 'REGISTRAR'] },
+    { name: 'Settings', href: '/dashboard/settings', icon: LayoutDashboard, roles: ['ADMIN', 'DIRECTOR'] },
   ]
 
   const filteredNavigation = navigation.filter(item => item.roles.includes(role))
