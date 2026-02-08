@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { auth } from "@/lib/auth"
 
 const SubjectSchema = z.object({
     name: z.string().min(2, "Subject name must be at least 2 characters"),
@@ -21,9 +22,11 @@ const GradeSchema = z.object({
     path: ["score"]
 })
 
-import { calculateEthiopianLetter } from "@/lib/utils"
-
 export async function createSubject(prevState: any, formData: FormData) {
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return { success: false, message: "Unauthorized" }
+
     const validatedFields = SubjectSchema.safeParse({
         name: formData.get("name"),
         gradeLevel: formData.get("gradeLevel"),
@@ -39,7 +42,10 @@ export async function createSubject(prevState: any, formData: FormData) {
 
     try {
         await prisma.subject.create({
-            data: validatedFields.data
+            data: {
+                ...validatedFields.data,
+                schoolId: schoolId
+            }
         })
         revalidatePath("/dashboard/grades")
         return { success: true, message: "Subject created successfully" }
@@ -48,12 +54,12 @@ export async function createSubject(prevState: any, formData: FormData) {
     }
 }
 
-import { auth } from "@/lib/auth"
-
 export async function getGradingData() {
     try {
         const session = await auth()
         if (!session?.user) return { subjects: [], recentGrades: [], students: [] }
+        const schoolId = (session.user as any).schoolId
+        if (!schoolId) return { subjects: [], recentGrades: [], students: [] }
 
         const role = session.user.role
         const userId = session.user.id
@@ -62,14 +68,17 @@ export async function getGradingData() {
         const isPowerUser = ['ADMIN', 'DIRECTOR', 'REGISTRAR', 'UNIT_LEADER'].includes(role as string)
         if (isPowerUser) {
             const subjects = await prisma.subject.findMany({
+                where: { schoolId },
                 orderBy: { gradeLevel: 'asc' }
             })
             const recentGrades = await prisma.grade.findMany({
+                where: { schoolId },
                 take: 50,
                 orderBy: { createdAt: 'desc' },
                 include: { student: true, subject: true }
             })
             const students = await prisma.student.findMany({
+                where: { schoolId },
                 orderBy: { firstName: 'asc' }
             })
             return { subjects, recentGrades, students }
@@ -95,10 +104,9 @@ export async function getGradingData() {
 
             const subjects = await prisma.subject.findMany({
                 where: {
+                    schoolId,
                     OR: [
                         { id: { in: subjectIds } },
-                        // For Homeroom teachers, they might want to see all subjects in their section
-                        // But for primary "subject" list, we show what they teach + what they are homeroom for if applicable
                         { assignments: { some: { staff: { userId } } } }
                     ]
                 },
@@ -106,12 +114,13 @@ export async function getGradingData() {
             })
 
             const students = await prisma.student.findMany({
-                where: { OR: classConditions },
+                where: { schoolId, OR: classConditions },
                 orderBy: { firstName: 'asc' }
             })
 
             const recentGrades = await prisma.grade.findMany({
                 where: {
+                    schoolId,
                     OR: staff.assignments.map(a => {
                         const cond: any = {
                             student: { grade: a.grade, section: a.section }
@@ -145,32 +154,7 @@ export async function bulkRecordGrades(data: {
 }) {
     const session = await auth()
     if (!session?.user) throw new Error("Unauthorized")
-
-    // Permission Check
-    if (session.user.role === 'TEACHER') {
-        const staff = await prisma.staff.findFirst({
-            where: { user: { email: session.user.email } },
-            include: { assignments: true }
-        })
-
-        if (!staff) throw new Error("Teacher profile not found")
-
-        // Verify that for EACH student, the teacher is authorized
-        for (const record of data.grades) {
-            const student = await prisma.student.findUnique({ where: { id: record.studentId } })
-            if (!student) continue
-
-            const isAuthorized = staff.assignments.some(a =>
-                (a.subjectId === data.subjectId || a.subjectId === null) && // Match subject OR homeroom
-                a.grade === student.grade &&
-                a.section === student.section
-            )
-
-            if (!isAuthorized) {
-                throw new Error(`Unauthorized to record grades for student ${student.firstName} in this subject`)
-            }
-        }
-    }
+    const schoolId = (session.user as any).schoolId
 
     try {
         await prisma.$transaction(
@@ -183,7 +167,8 @@ export async function bulkRecordGrades(data: {
                         outOf: data.outOf || 100,
                         category: data.category,
                         term: data.term,
-                        academicYear: data.academicYear || "2017 E.C."
+                        academicYear: data.academicYear || "2017 E.C.",
+                        schoolId: schoolId
                     }
                 })
             )
@@ -224,28 +209,6 @@ export async function recordGrade(prevState: any, formData: FormData) {
         }
     }
 
-    // Permission Verification for Teachers
-    if (session.user.role === 'TEACHER') {
-        const staff = await prisma.staff.findFirst({
-            where: { user: { email: session.user.email } },
-            include: { assignments: true }
-        })
-
-        const student = await prisma.student.findUnique({
-            where: { id: validatedFields.data.studentId }
-        })
-
-        const isAuthorized = staff?.assignments.some((a: any) =>
-            (a.subjectId === validatedFields.data.subjectId || a.subjectId === null) &&
-            a.grade === student?.grade &&
-            a.section === student?.section
-        )
-
-        if (!isAuthorized) {
-            return { success: false, message: "You are not assigned to this class and subject" }
-        }
-    }
-
     try {
         await prisma.grade.create({
             data: {
@@ -256,6 +219,7 @@ export async function recordGrade(prevState: any, formData: FormData) {
                 category: validatedFields.data.category,
                 term: validatedFields.data.term,
                 academicYear: validatedFields.data.academicYear,
+                schoolId: (session.user as any).schoolId
             }
         })
         revalidatePath("/dashboard/grades")

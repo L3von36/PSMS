@@ -44,11 +44,11 @@ export function StudentDetailModal({
       grade: student.grade,
       term: 'Term 1, 2024',
       grades: [
-        { subject: 'Mathematics', score: 85, grade: 'A' },
-        { subject: 'Physics', score: 92, grade: 'A+' },
-        { subject: 'Chemistry', score: 78, grade: 'B' },
-        { subject: 'English', score: 88, grade: 'A' },
-        { subject: 'Biology', score: 91, grade: 'A' },
+        { subject: 'Mathematics', score: 85, grade: 'A', category: 'Final' },
+        { subject: 'Physics', score: 92, grade: 'A+', category: 'Final' },
+        { subject: 'Chemistry', score: 78, grade: 'B', category: 'Final' },
+        { subject: 'English', score: 88, grade: 'A', category: 'Final' },
+        { subject: 'Biology', score: 91, grade: 'A', category: 'Final' },
       ],
       attendance: '95%',
       teacherComments: `${student.firstName} has been an outstanding student this term. Their participation in Physics experiments has been noteworthy. Keep up the great work!`

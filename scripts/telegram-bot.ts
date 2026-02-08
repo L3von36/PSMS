@@ -1,5 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/lib/generated-prisma';
 import dotenv from 'dotenv';
 
 // Load environment variables

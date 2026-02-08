@@ -45,7 +45,7 @@ export function RevenueChart() {
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px'
               }}
-              formatter={(value: number) => [`ETB ${value.toLocaleString()}`, 'Revenue']}
+              formatter={(value: any) => [`ETB ${value.toLocaleString()}`, 'Revenue']}
             />
             <Area 
               type="monotone" 

@@ -9,6 +9,7 @@ generator client {
 }
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
   TEACHER
   ACCOUNTANT
@@ -17,6 +18,35 @@ enum Role {
   DIRECTOR
   REGISTRAR
   UNIT_LEADER
+}
+
+model School {
+  id      String  @id @default(cuid())
+  name    String
+  address String?
+  phone   String?
+  email   String? @unique
+  logoUrl String?
+  config  String? @default("{}") // JSON string for school-specific settings
+
+  users          User[]
+  students       Student[]
+  parents        Parent[]
+  staff          Staff[]
+  subjects       Subject[]
+  fees           FeeStructure[]
+  inventory      InventoryItem[]
+  payrolls       Payroll[]
+  exams          Exam[]
+  grades         Grade[]
+  payments       Payment[]
+  attendances    Attendance[]
+  communications Communication[]
+  assignments    TeacherAssignment[]
+  questions      Question[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
@@ -30,9 +60,310 @@ model User {
   accounts      Account[]
   sessions      Session[]
 
+  schoolId String?
+  school   School? @relation(fields: [schoolId], references: [id])
+
   studentProfile Student?
   parentProfile  Parent?
   staffProfile   Staff?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id     String  @id @default(cuid())
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  firstName         String
+  lastName          String
+  grade             String
+  section           String?
+  parents           Parent[]
+  grades            Grade[]
+  payments          Payment[]
+  photoUrl          String?
+  email             String?
+  phone             String?
+  status            String    @default("New") // New, Returning, Transferred
+  enrollmentHistory String? // Details about previous schools etc.
+
+  attendances Attendance[]
+
+  // National Exam Tracking
+  isNationalExamCandidate Boolean @default(false)
+  nationalExamId          String?
+  nationalExamResult      Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Parent {
+  id     String  @id @default(cuid())
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  firstName          String
+  lastName           String
+  phone              String
+  secondaryPhone     String?
+  email              String?
+  whatsapp           String?
+  telegram           String?
+  telegramChatId     String? // Telegram chat ID for bot messaging
+  occupation         String?
+  employer           String?
+  nationalId         String?
+  isEmergencyContact Boolean         @default(false)
+  address            String?
+  students           Student[]
+  payments           Payment[]
+  communications     Communication[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}
+
+model Communication {
+  id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  type      String // SMS, Email, In-App, Call
+  subject   String?
+  content   String
+  parentId  String
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  senderId  String? // Staff who sent it
+  studentId String? // Related student context
+  isRead    Boolean  @default(false)
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+model Staff {
+  id     String  @id @default(cuid())
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  firstName String
+  lastName  String
+  role      Role
+
+  subjects    Subject[]
+  assignments TeacherAssignment[]
+  timetables  Timetable[]
+  salaries    Salary[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TeacherAssignment {
+  id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  staffId   String
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id])
+  grade     String
+  section   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subject {
+  id       String @id @default(cuid())
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  name        String
+  gradeLevel  String
+  exams       Exam[]
+  grades      Grade[]
+  teachers    Staff[]
+  assignments TeacherAssignment[]
+  attendances Attendance[]
+  timetables  Timetable[]
+}
+
+model Exam {
+  id        String     @id @default(cuid())
+  schoolId  String
+  school    School     @relation(fields: [schoolId], references: [id])
+  title     String
+  subjectId String
+  subject   Subject    @relation(fields: [subjectId], references: [id])
+  questions Question[]
+  createdAt DateTime   @default(now())
+}
+
+model Question {
+  id       String  @id @default(cuid())
+  schoolId String
+  school   School  @relation(fields: [schoolId], references: [id])
+  examId   String
+  exam     Exam    @relation(fields: [examId], references: [id])
+  text     String
+  type     String // MC, TrueFalse, etc.
+  options  String? // JSON string
+  answer   String
+}
+
+model Grade {
+  id           String   @id @default(cuid())
+  schoolId     String
+  school       School   @relation(fields: [schoolId], references: [id])
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id])
+  subjectId    String
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+  score        Float
+  outOf        Float    @default(100)
+  category     String   @default("CA") // CA (Continuous Assessment), Midterm, Final
+  term         String
+  academicYear String   @default("2017 E.C.") // Default to current Ethiopian year
+  createdAt    DateTime @default(now())
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  studentId String?
+  student   Student? @relation(fields: [studentId], references: [id])
+  parentId  String?
+  parent    Parent?  @relation(fields: [parentId], references: [id])
+  amount    Float
+  method    String // Cash, Telebirr
+  status    String // Paid, Pending
+  proof     String? // URL/Path to receipt
+
+  feeId String?
+  fee   FeeStructure? @relation(fields: [feeId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model FeeStructure {
+  id       String @id @default(cuid())
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  title      String // e.g. "Monthly Tuition - Grade 10"
+  amount     Float
+  gradeLevel String? // e.g. "10"
+  dueDate    DateTime?
+  payments   Payment[]
+  createdAt  DateTime  @default(now())
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  date      DateTime @default(now())
+  status    String // PRESENT, ABSENT, LATE, EXCUSED
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  subjectId String? // Specific subject tracking
+  subject   Subject? @relation(fields: [subjectId], references: [id])
+  period    Int? // Period number (1, 2, 3...)
+  classId   String? // Optional context (subject or section)
+  remarks   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Timetable {
+  id        String   @id @default(cuid())
+  schoolId  String
+  staffId   String
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  dayOfWeek Int // 1 = Monday, ..., 7 = Sunday
+  period    Int // 1-8
+  startTime String // e.g. "08:30"
+  endTime   String // e.g. "09:15"
+  room      String? // Room number/name
+  grade     String
+  section   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// New Models for Features
+
+model InventoryItem {
+  id          String  @id @default(cuid())
+  schoolId    String
+  school      School  @relation(fields: [schoolId], references: [id])
+  name        String
+  category    String // Uniform, Book, Stationery, etc.
+  quantity    Int     @default(0)
+  unitPrice   Float?
+  description String?
+
+  transactions StockTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StockTransaction {
+  id            String        @id @default(cuid())
+  itemId        String
+  item          InventoryItem @relation(fields: [itemId], references: [id])
+  type          String // IN, OUT
+  quantity      Int
+  relatedToType String? // STUDENT, STAFF, PURCHASE
+  relatedToId   String? // ID of student or staff
+  note          String?
+
+  createdAt DateTime @default(now())
+}
+
+model Payroll {
+  id       String @id @default(cuid())
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+  month    Int
+  year     Int
+  status   String @default("DRAFT") // DRAFT, PROCESSED, PAID
+
+  salaries Salary[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([schoolId, month, year])
+}
+
+model Salary {
+  id        String  @id @default(cuid())
+  staffId   String
+  staff     Staff   @relation(fields: [staffId], references: [id])
+  payrollId String
+  payroll   Payroll @relation(fields: [payrollId], references: [id])
+
+  baseSalary Float
+  allowances Float @default(0)
+  deductions Float @default(0)
+  netSalary  Float
+
+  status String    @default("PENDING") // PENDING, PAID
+  paidAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,202 +394,4 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Student {
-  id                String    @id @default(cuid())
-  userId            String?   @unique
-  user              User?     @relation(fields: [userId], references: [id])
-  firstName         String
-  lastName          String
-  grade             String
-  section           String?
-  parents           Parent[]
-  grades            Grade[]
-  payments          Payment[]
-  photoUrl          String?
-  email             String?
-  phone             String?
-  status            String    @default("New") // New, Returning, Transferred
-  enrollmentHistory String? // Details about previous schools etc.
-
-  attendances Attendance[]
-
-  // National Exam Tracking
-  isNationalExamCandidate Boolean @default(false)
-  nationalExamId          String?
-  nationalExamResult      Float?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Parent {
-  id                 String          @id @default(cuid())
-  userId             String?         @unique
-  user               User?           @relation(fields: [userId], references: [id])
-  firstName          String
-  lastName           String
-  phone              String
-  secondaryPhone     String?
-  email              String?
-  whatsapp           String?
-  telegram           String?
-  telegramChatId     String? // Telegram chat ID for bot messaging
-  occupation         String?
-  employer           String?
-  nationalId         String?
-  isEmergencyContact Boolean         @default(false)
-  address            String?
-  students           Student[]
-  payments           Payment[]
-  communications     Communication[]
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-}
-
-model Communication {
-  id        String   @id @default(cuid())
-  type      String // SMS, Email, In-App, Call
-  subject   String?
-  content   String
-  parentId  String
-  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  senderId  String? // Staff who sent it
-  studentId String? // Related student context
-  isRead    Boolean  @default(false)
-  sentAt    DateTime @default(now())
-  createdAt DateTime @default(now())
-}
-
-model Staff {
-  id        String  @id @default(cuid())
-  userId    String? @unique
-  user      User?   @relation(fields: [userId], references: [id])
-  firstName String
-  lastName  String
-  role      Role
-
-  subjects    Subject[]
-  assignments TeacherAssignment[]
-  timetables  Timetable[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model TeacherAssignment {
-  id        String   @id @default(cuid())
-  staffId   String
-  staff     Staff    @relation(fields: [staffId], references: [id])
-  subjectId String?
-  subject   Subject? @relation(fields: [subjectId], references: [id])
-  grade     String
-  section   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Subject {
-  id          String              @id @default(cuid())
-  name        String
-  gradeLevel  String
-  exams       Exam[]
-  grades      Grade[]
-  teachers    Staff[]
-  assignments TeacherAssignment[]
-  attendances Attendance[]
-  timetables  Timetable[]
-}
-
-model Exam {
-  id        String     @id @default(cuid())
-  title     String
-  subjectId String
-  subject   Subject    @relation(fields: [subjectId], references: [id])
-  questions Question[]
-  createdAt DateTime   @default(now())
-}
-
-model Question {
-  id      String  @id @default(cuid())
-  examId  String
-  exam    Exam    @relation(fields: [examId], references: [id])
-  text    String
-  type    String // MC, TrueFalse, etc.
-  options String? // JSON string
-  answer  String
-}
-
-model Grade {
-  id           String   @id @default(cuid())
-  studentId    String
-  student      Student  @relation(fields: [studentId], references: [id])
-  subjectId    String
-  subject      Subject  @relation(fields: [subjectId], references: [id])
-  score        Float
-  outOf        Float    @default(100)
-  category     String   @default("CA") // CA (Continuous Assessment), Midterm, Final
-  term         String
-  academicYear String   @default("2017 E.C.") // Default to current Ethiopian year
-  createdAt    DateTime @default(now())
-}
-
-model Payment {
-  id        String   @id @default(cuid())
-  studentId String?
-  student   Student? @relation(fields: [studentId], references: [id])
-  parentId  String?
-  parent    Parent?  @relation(fields: [parentId], references: [id])
-  amount    Float
-  method    String // Cash, Telebirr
-  status    String // Paid, Pending
-  proof     String? // URL/Path to receipt
-
-  feeId String?
-  fee   FeeStructure? @relation(fields: [feeId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-model FeeStructure {
-  id         String    @id @default(cuid())
-  title      String // e.g. "Monthly Tuition - Grade 10"
-  amount     Float
-  gradeLevel String? // e.g. "10"
-  dueDate    DateTime?
-  payments   Payment[]
-  createdAt  DateTime  @default(now())
-}
-
-model Attendance {
-  id        String   @id @default(cuid())
-  date      DateTime @default(now())
-  status    String // PRESENT, ABSENT, LATE, EXCUSED
-  studentId String
-  student   Student  @relation(fields: [studentId], references: [id])
-  subjectId String? // Specific subject tracking
-  subject   Subject? @relation(fields: [subjectId], references: [id])
-  period    Int? // Period number (1, 2, 3...)
-  classId   String? // Optional context (subject or section)
-  remarks   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Timetable {
-  id        String   @id @default(cuid())
-  staffId   String
-  staff     Staff    @relation(fields: [staffId], references: [id])
-  subjectId String
-  subject   Subject  @relation(fields: [subjectId], references: [id])
-  dayOfWeek Int // 1 = Monday, ..., 7 = Sunday
-  period    Int // 1-8
-  startTime String // e.g. "08:30"
-  endTime   String // e.g. "09:15"
-  room      String? // Room number/name
-  grade     String
-  section   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }

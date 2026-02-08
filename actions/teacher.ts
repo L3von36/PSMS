@@ -10,10 +10,11 @@ import { sendTelegramMessage } from "@/lib/telegram"
 export async function getTeacherClasses() {
     const session = await auth()
     if (!session?.user?.email) throw new Error("Unauthorized")
+    const schoolId = (session.user as any).schoolId
 
     // Find the staff record linked to this user
     const teacher = await prisma.staff.findFirst({
-        where: { user: { email: session.user.email } },
+        where: { user: { email: session.user.email }, schoolId },
         include: {
             assignments: {
                 include: {
@@ -25,24 +26,22 @@ export async function getTeacherClasses() {
 
     if (!teacher) return []
 
-    // Group by Grade/Section
-    // { grade: "10", section: "A", subject: "Math", studentCount: 123 }
     return teacher.assignments.map(a => ({
         id: a.id,
         grade: a.grade,
         section: a.section,
         subject: a.subject?.name || "Homeroom",
         subjectId: a.subjectId,
-        // We would need to count students in this section.
-        // For MVP, we'll fetch that separately or just return the metadata
     }))
 }
 
 export async function getClassRoster(grade: string, section: string) {
-    // Basic security check: ensure teacher is assigned to this class? 
-    // For now, allow logged in staff to view rosters.
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return []
+
     const students = await prisma.student.findMany({
-        where: { grade, section },
+        where: { grade, section, schoolId },
         orderBy: { firstName: 'asc' },
         include: {
             attendances: {
@@ -69,24 +68,22 @@ export async function markAttendance(data: {
 }) {
     const session = await auth()
     if (!session?.user) throw new Error("Unauthorized")
+    const schoolId = (session.user as any).schoolId
 
-    // Upsert attendance record for today
     const startOfDay = new Date(data.date)
     startOfDay.setHours(0, 0, 0, 0)
     const endOfDay = new Date(data.date)
     endOfDay.setHours(23, 59, 59, 999)
 
-    // Check if record exists for this student on this day/subject/period
     const query: any = {
         studentId: data.studentId,
         date: {
             gte: startOfDay,
             lte: endOfDay
-        }
+        },
+        schoolId
     }
 
-    // For primary schools, they might not use subjectId. 
-    // For secondary, we want subject-specific records.
     if (data.subjectId) query.subjectId = data.subjectId
     if (data.period) query.period = data.period
 
@@ -113,7 +110,8 @@ export async function markAttendance(data: {
                 date: data.date,
                 remarks: data.remarks,
                 subjectId: data.subjectId,
-                period: data.period
+                period: data.period,
+                schoolId: schoolId
             }
         })
     }
@@ -136,22 +134,21 @@ export async function bulkMarkAttendance(
 export async function getAttendanceHistory(grade?: string, section?: string, date?: Date, subjectId?: string) {
     const session = await auth()
     if (!session?.user) throw new Error("Unauthorized")
+    const schoolId = (session.user as any).schoolId
 
-    const query: any = {}
+    const query: any = { schoolId }
 
     // RBAC Logic
     const isPowerUser = ['ADMIN', 'DIRECTOR', 'REGISTRAR'].includes(session.user.role as string)
     if (!isPowerUser) {
         const teacher = await prisma.staff.findFirst({
-            where: { user: { email: session.user.email } },
+            where: { user: { email: session.user.email }, schoolId },
             include: { assignments: true }
         })
 
         if (!teacher || teacher.assignments.length === 0) return []
 
         const assignmentConditions = teacher.assignments.map(a => {
-            // If this is a grade/section wide assignment (homeroom), no subject filter
-            // If it's subject specific, filter by that subject too
             const cond: any = {
                 student: { grade: a.grade, section: a.section }
             }
@@ -161,7 +158,6 @@ export async function getAttendanceHistory(grade?: string, section?: string, dat
         query.OR = assignmentConditions
     }
 
-    // Apply explicit filters if provided (must still be within RBAC bounds)
     if (grade && grade !== 'ALL') {
         query.student = { ...query.student, grade }
     }
@@ -195,8 +191,8 @@ export async function getAttendanceHistory(grade?: string, section?: string, dat
 export async function getMonthlyAttendance(year: number, month: number, grade?: string, section?: string, subjectId?: string) {
     const session = await auth()
     if (!session?.user) throw new Error("Unauthorized")
+    const schoolId = (session.user as any).schoolId
 
-    // month is 0-indexed (0 = Jan, 11 = Dec)
     const startDate = new Date(year, month, 1)
     const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999)
 
@@ -204,14 +200,15 @@ export async function getMonthlyAttendance(year: number, month: number, grade?: 
         date: {
             gte: startDate,
             lte: endDate
-        }
+        },
+        schoolId
     }
 
     // RBAC Logic
     const isPowerUser = ['ADMIN', 'DIRECTOR', 'REGISTRAR'].includes(session.user.role as string)
     if (!isPowerUser) {
         const teacher = await prisma.staff.findFirst({
-            where: { user: { email: session.user.email } },
+            where: { user: { email: session.user.email }, schoolId },
             include: { assignments: true }
         })
 
@@ -228,11 +225,9 @@ export async function getMonthlyAttendance(year: number, month: number, grade?: 
             { date: query.date },
             { OR: assignmentConditions }
         ]
-        // Remove the top level date since it's now in AND
         delete query.date
     }
 
-    // Explicit Filter Overrides
     if (grade && grade !== 'ALL') {
         if (!query.student) query.student = {}
         query.student.grade = grade
@@ -260,9 +255,10 @@ export async function getMonthlyAttendance(year: number, month: number, grade?: 
 export async function getTeacherSubjectsForClass(grade: string, section: string) {
     const session = await auth()
     if (!session?.user?.email) throw new Error("Unauthorized")
+    const schoolId = (session.user as any).schoolId
 
     const teacher = await prisma.staff.findFirst({
-        where: { user: { email: session.user.email } },
+        where: { user: { email: session.user.email }, schoolId },
         include: {
             assignments: {
                 where: { grade, section },
@@ -273,7 +269,6 @@ export async function getTeacherSubjectsForClass(grade: string, section: string)
 
     if (!teacher) return []
 
-    // Deduplicate subjects
     const subjectsMap = new Map()
     teacher.assignments.forEach(a => {
         if (a.subject) {
@@ -287,9 +282,10 @@ export async function getTeacherSubjectsForClass(grade: string, section: string)
 export async function getTeacherAssignments() {
     const session = await auth()
     if (!session?.user?.email) throw new Error("Unauthorized")
+    const schoolId = (session.user as any).schoolId
 
     const teacher = await prisma.staff.findFirst({
-        where: { user: { email: session.user.email } },
+        where: { user: { email: session.user.email }, schoolId },
         include: {
             assignments: {
                 include: { subject: true }
@@ -314,7 +310,6 @@ export async function notifyParentOfAbsence(studentId: string, status: string) {
         return { success: false, error: "Student or parents not found" }
     }
 
-    // Attempt to notify all parents linked to the student who have Telegram
     let sentCount = 0
     for (const parent of student.parents) {
         if (parent.telegramChatId) {
@@ -334,9 +329,10 @@ export async function notifyParentOfAbsence(studentId: string, status: string) {
 export async function getTeacherSchedule() {
     const session = await auth()
     if (!session?.user?.email) throw new Error("Unauthorized")
+    const schoolId = (session.user as any).schoolId
 
     const teacher = await prisma.staff.findFirst({
-        where: { user: { email: session.user.email } },
+        where: { user: { email: session.user.email }, schoolId },
         include: {
             timetables: {
                 include: { subject: true },
@@ -347,7 +343,6 @@ export async function getTeacherSchedule() {
 
     if (!teacher) return []
 
-    // Map to normalized schedule objects
     return teacher.timetables.map(t => ({
         id: t.id,
         subject: t.subject.name,
@@ -361,13 +356,13 @@ export async function getTeacherSchedule() {
     }))
 }
 
-// Temporary seed for schedule if none exists
 export async function seedTeacherSchedule() {
     const session = await auth()
     if (!session?.user?.email) return
+    const schoolId = (session.user as any).schoolId
 
     const teacher = await prisma.staff.findFirst({
-        where: { user: { email: session.user.email } },
+        where: { user: { email: session.user.email }, schoolId },
         include: { assignments: true, timetables: true }
     })
 
@@ -396,7 +391,8 @@ export async function seedTeacherSchedule() {
                 startTime: s.start,
                 endTime: s.end,
                 dayOfWeek: today,
-                room: `Room ${100 + i}`
+                room: `Room ${100 + i}`,
+                schoolId: schoolId
             }
         })
     }

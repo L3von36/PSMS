@@ -24,15 +24,17 @@ export async function getParentData() {
     try {
         const session = await auth()
         if (!session?.user) return { parents: [], students: [], communications: [] }
+        const schoolId = (session.user as any).schoolId
+        if (!schoolId) return { parents: [], students: [], communications: [] }
 
         const role = session.user.role
 
-        // Only ADMIN, DIRECTOR, REGISTRAR can access parent management
         if (!['ADMIN', 'DIRECTOR', 'REGISTRAR'].includes(role)) {
             return { parents: [], students: [], communications: [] }
         }
 
         const parents = await prisma.parent.findMany({
+            where: { schoolId },
             include: {
                 students: true,
                 communications: {
@@ -47,6 +49,7 @@ export async function getParentData() {
         })
 
         const students = await prisma.student.findMany({
+            where: { schoolId },
             select: {
                 id: true,
                 firstName: true,
@@ -58,6 +61,7 @@ export async function getParentData() {
         })
 
         const communications = await prisma.communication.findMany({
+            where: { schoolId },
             include: { parent: true },
             orderBy: { sentAt: 'desc' },
             take: 50
@@ -73,6 +77,7 @@ export async function getParentData() {
 export async function createParent(prevState: any, formData: FormData) {
     const session = await auth()
     if (!session?.user) return { success: false, message: "Unauthorized" }
+    const schoolId = (session.user as any).schoolId
 
     if (!['ADMIN', 'DIRECTOR', 'REGISTRAR'].includes(session.user.role)) {
         return { success: false, message: "Permission denied" }
@@ -108,7 +113,6 @@ export async function createParent(prevState: any, formData: FormData) {
     try {
         const { studentIds: linkedStudents, ...parentData } = validatedFields.data
 
-        // Create User account for parent (optional - for parent portal access)
         let userId = null
         if (parentData.email) {
             const user = await prisma.user.create({
@@ -116,7 +120,8 @@ export async function createParent(prevState: any, formData: FormData) {
                     email: parentData.email,
                     name: `${parentData.firstName} ${parentData.lastName}`,
                     role: 'PARENT',
-                    password: 'password123' // TODO: Send activation email to set password
+                    password: 'password123',
+                    schoolId: schoolId
                 }
             })
             userId = user.id
@@ -126,6 +131,7 @@ export async function createParent(prevState: any, formData: FormData) {
             data: {
                 ...parentData,
                 userId,
+                schoolId,
                 students: linkedStudents && linkedStudents.length > 0 ? {
                     connect: linkedStudents.map(id => ({ id }))
                 } : undefined
@@ -143,6 +149,7 @@ export async function createParent(prevState: any, formData: FormData) {
 export async function updateParent(prevState: any, formData: FormData) {
     const session = await auth()
     if (!session?.user) return { success: false, message: "Unauthorized" }
+    const schoolId = (session.user as any).schoolId
 
     if (!['ADMIN', 'DIRECTOR', 'REGISTRAR'].includes(session.user.role)) {
         return { success: false, message: "Permission denied" }
@@ -180,7 +187,7 @@ export async function updateParent(prevState: any, formData: FormData) {
         const { studentIds: linkedStudents, ...parentData } = validatedFields.data
 
         await prisma.parent.update({
-            where: { id: parentId },
+            where: { id: parentId, schoolId },
             data: {
                 ...parentData,
                 students: {
@@ -202,13 +209,14 @@ export async function updateParent(prevState: any, formData: FormData) {
 export async function deleteParent(parentId: string) {
     const session = await auth()
     if (!session?.user) return { success: false, message: "Unauthorized" }
+    const schoolId = (session.user as any).schoolId
 
     if (!['ADMIN', 'DIRECTOR'].includes(session.user.role)) {
         return { success: false, message: "Permission denied" }
     }
 
     try {
-        await prisma.parent.delete({ where: { id: parentId } })
+        await prisma.parent.delete({ where: { id: parentId, schoolId } })
         revalidatePath("/dashboard/parents")
         return { success: true, message: "Parent deleted successfully" }
     } catch (e: any) {
@@ -216,9 +224,27 @@ export async function deleteParent(parentId: string) {
     }
 }
 
+export async function getCommunicationHistory(parentId: string) {
+    const session = await auth()
+    if (!session?.user) return []
+    const schoolId = (session.user as any).schoolId
+
+    try {
+        const communications = await prisma.communication.findMany({
+            where: { parentId, schoolId },
+            orderBy: { sentAt: 'desc' }
+        })
+        return communications
+    } catch (error) {
+        console.error("Communication fetch error:", error)
+        return []
+    }
+}
+
 export async function sendCommunication(prevState: any, formData: FormData) {
     const session = await auth()
     if (!session?.user) return { success: false, message: "Unauthorized" }
+    const schoolId = (session.user as any).schoolId
 
     const parentIds = formData.get("parentIds")
     const parentIdArray = parentIds ? JSON.parse(parentIds as string) : []
@@ -232,39 +258,17 @@ export async function sendCommunication(prevState: any, formData: FormData) {
     }
 
     try {
-        // Fetch parents to get telegram info if needed
         const parents = await prisma.parent.findMany({
-            where: { id: { in: parentIdArray } }
+            where: { id: { in: parentIdArray }, schoolId }
         })
 
         const communications = []
-        let telegramSuccessCount = 0
-        let telegramFailCount = 0
-
-        // Import dynamically to avoid build issues if server-only
         const { sendTelegramMessage, isTelegramConfigured } = await import("@/lib/telegram")
 
-        // Type casting to avoid build errors if Prisma types are not yet generated
         for (const parent of parents as any[]) {
-            let isSent = false
-
-            // Handle Telegram sending
             if (type === "Telegram") {
-                if (!isTelegramConfigured()) {
-                    console.error("Telegram token not configured")
-                    // We still create the record but maybe mark as failed or just proceed? 
-                    // For now, we'll proceed but it won't be sent really.
-                } else if (parent.telegramChatId) {
-                    const result = await sendTelegramMessage(parent.telegramChatId, `${subject ? `*${subject}*\n\n` : ''}${content}`)
-                    if (result.success) {
-                        telegramSuccessCount++
-                        isSent = true // You could add a status field to Communication model later
-                    } else {
-                        telegramFailCount++
-                        console.error(`Failed to send to parent ${parent.id}: ${result.error}`)
-                    }
-                } else {
-                    telegramFailCount++ // No chat ID linked
+                if (isTelegramConfigured() && parent.telegramChatId) {
+                    await sendTelegramMessage(parent.telegramChatId, `${subject ? `*${subject}*\n\n` : ''}${content}`)
                 }
             }
 
@@ -275,37 +279,15 @@ export async function sendCommunication(prevState: any, formData: FormData) {
                 parentId: parent.id,
                 senderId: session.user.id,
                 studentId,
-                isRead: false, // Default
+                isRead: false,
+                schoolId
             })
         }
 
         await prisma.communication.createMany({ data: communications })
-
         revalidatePath("/dashboard/parents")
-
-        let message = `Message recorded for ${communications.length} parent(s)`
-        if (type === "Telegram") {
-            message = `Telegram: ${telegramSuccessCount} sent, ${telegramFailCount} failed/not linked.`
-        }
-
-        return { success: true, message }
+        return { success: true, message: `Message recorded for ${communications.length} parent(s)` }
     } catch (e: any) {
         return { success: false, message: e.message || "Failed to send communication" }
-    }
-}
-
-export async function getCommunicationHistory(parentId: string) {
-    const session = await auth()
-    if (!session?.user) return []
-
-    try {
-        const communications = await prisma.communication.findMany({
-            where: { parentId },
-            orderBy: { sentAt: 'desc' }
-        })
-        return communications
-    } catch (error) {
-        console.error("Communication fetch error:", error)
-        return []
     }
 }

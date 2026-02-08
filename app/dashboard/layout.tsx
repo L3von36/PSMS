@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { auth, signOut } from "@/lib/auth"
-import { LayoutDashboard, Users, Banknote, GraduationCap, FileQuestion, ShieldCheck, ClipboardList, History } from "lucide-react"
+import { LayoutDashboard, Users, Banknote, GraduationCap, FileQuestion, ShieldCheck, ClipboardList, History, Package, ReceiptText, CreditCard } from "lucide-react"
 import { GlobalSearch } from '@/components/global-search'
+import { LanguageSwitcher } from '@/components/language-switcher'
 
 export default async function DashboardLayout({
   children,
@@ -19,8 +20,11 @@ export default async function DashboardLayout({
     { name: 'Attendance', href: '/dashboard/attendance', icon: ClipboardList, roles: ['ADMIN', 'DIRECTOR', 'TEACHER', 'UNIT_LEADER'] },
     { name: 'Attendance History', href: '/dashboard/attendance/history', icon: History, roles: ['ADMIN', 'DIRECTOR', 'TEACHER', 'UNIT_LEADER'] },
     { name: 'Finance', href: '/dashboard/finance', icon: Banknote, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTANT'] },
+    { name: 'Payroll', href: '/dashboard/payroll', icon: ReceiptText, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTANT'] },
+    { name: 'Inventory', href: '/dashboard/inventory', icon: Package, roles: ['ADMIN', 'DIRECTOR', 'ACCOUNTANT', 'UNIT_LEADER'] },
     { name: 'Grades', href: '/dashboard/grades', icon: GraduationCap, roles: ['ADMIN', 'DIRECTOR', 'UNIT_LEADER', 'TEACHER', 'STUDENT', 'PARENT'] },
     { name: 'Exam Bank', href: '/dashboard/exams', icon: FileQuestion, roles: ['ADMIN', 'DIRECTOR', 'UNIT_LEADER', 'TEACHER'] },
+    { name: 'ID Cards', href: '/dashboard/id-cards', icon: CreditCard, roles: ['ADMIN', 'DIRECTOR', 'REGISTRAR'] },
   ]
 
   const filteredNavigation = navigation.filter(item => item.roles.includes(role))
@@ -74,7 +78,7 @@ export default async function DashboardLayout({
         <header className="h-16 bg-white border-b dark:bg-gray-800 dark:border-gray-700 flex items-center justify-between px-8 flex-shrink-0 z-10">
           <GlobalSearch />
           <div className="flex items-center gap-4">
-            {/* Other header items like notifications, theme toggle could go here */}
+            <LanguageSwitcher />
           </div>
         </header>
 

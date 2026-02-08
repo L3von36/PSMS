@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { auth } from "@/lib/auth"
 
 const ExamSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters"),
@@ -16,12 +17,12 @@ const QuestionSchema = z.object({
     options: z.string().optional(), // JSON string for MC items
 })
 
-import { auth } from "@/lib/auth"
-
 export async function getExamData() {
     try {
         const session = await auth()
         if (!session?.user) return { exams: [], subjects: [], questions: [] }
+        const schoolId = (session.user as any).schoolId
+        if (!schoolId) return { exams: [], subjects: [], questions: [] }
 
         const role = session.user.role
         const userId = session.user.id
@@ -29,13 +30,17 @@ export async function getExamData() {
         // Admin/Director/Unit Leader (God-view)
         if (['ADMIN', 'DIRECTOR', 'UNIT_LEADER'].includes(role)) {
             const exams = await prisma.exam.findMany({
+                where: { schoolId },
                 include: { subject: true, questions: true },
                 orderBy: { createdAt: 'desc' }
             })
             const subjects = await prisma.subject.findMany({
+                where: { schoolId },
                 orderBy: { name: 'asc' }
             })
-            const questions = await prisma.question.findMany()
+            const questions = await prisma.question.findMany({
+                where: { exam: { schoolId } }
+            })
 
             return { exams, subjects, questions }
         }
@@ -54,18 +59,18 @@ export async function getExamData() {
             const subjectIds = Array.from(new Set(staff.assignments.map(a => a.subjectId).filter(Boolean))) as string[]
 
             const exams = await prisma.exam.findMany({
-                where: { subjectId: { in: subjectIds } },
+                where: { subjectId: { in: subjectIds }, schoolId },
                 include: { subject: true, questions: true },
                 orderBy: { createdAt: 'desc' }
             })
 
             const subjects = await prisma.subject.findMany({
-                where: { id: { in: subjectIds } },
+                where: { id: { in: subjectIds }, schoolId },
                 orderBy: { name: 'asc' }
             })
 
             const questions = await prisma.question.findMany({
-                where: { exam: { subjectId: { in: subjectIds } } }
+                where: { exam: { subjectId: { in: subjectIds } }, schoolId }
             })
 
             return { exams, subjects, questions }
@@ -110,7 +115,10 @@ export async function createExam(prevState: any, formData: FormData) {
 
     try {
         await prisma.exam.create({
-            data: validatedFields.data
+            data: {
+                ...validatedFields.data,
+                schoolId: (session.user as any).schoolId
+            }
         })
         revalidatePath("/dashboard/exams")
         return { success: true, message: "Exam repository created successfully" }
@@ -163,7 +171,10 @@ export async function addQuestion(prevState: any, formData: FormData) {
 
     try {
         await prisma.question.create({
-            data: validatedFields.data
+            data: {
+                ...validatedFields.data,
+                schoolId: (session.user as any).schoolId
+            }
         })
         revalidatePath("/dashboard/exams")
         return { success: true, message: "Question added successfully" }

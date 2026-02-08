@@ -20,11 +20,18 @@ type Parent = {
   firstName: string
   lastName: string
   phone: string
+  secondaryPhone?: string | null
   email?: string | null
   whatsapp?: string | null
   telegram?: string | null
   telegramChatId?: string | null
-  students: { id: string; firstName: string; lastName: string }[]
+  occupation?: string | null
+  employer?: string | null
+  nationalId?: string | null
+  isEmergencyContact: boolean
+  address?: string | null
+  students: { id: string; firstName: string; lastName: string; grade: string }[]
+  communications: any[]
   _count: { students: number; communications: number }
   createdAt: Date
 }

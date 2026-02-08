@@ -2,16 +2,18 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
-import { Role } from "@prisma/client"
+import { Role } from "@/lib/generated-prisma"
 
 export async function getStaffMembers() {
     try {
         const session = await auth()
-        if (!['ADMIN', 'DIRECTOR', 'UNIT_LEADER'].includes(session?.user?.role || '')) {
+        const schoolId = (session?.user as any)?.schoolId
+        if (!schoolId || !['ADMIN', 'DIRECTOR', 'UNIT_LEADER'].includes(session?.user?.role || '')) {
             return { success: false, message: "Unauthorized" }
         }
 
         const staff = await prisma.staff.findMany({
+            where: { schoolId },
             include: {
                 assignments: {
                     include: { subject: true }
@@ -34,12 +36,14 @@ export async function assignTeacher(staffId: string, grade: string, section: str
             return { success: false, message: "Unauthorized" }
         }
 
+        const schoolId = (session?.user as any)?.schoolId
         await prisma.teacherAssignment.create({
             data: {
                 staffId,
                 grade,
                 section,
-                subjectId: (subjectId === 'null' || !subjectId) ? null : subjectId
+                subjectId: (subjectId === 'null' || !subjectId) ? null : subjectId,
+                schoolId: schoolId
             }
         })
 

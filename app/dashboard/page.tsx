@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { Role } from '@prisma/client'
+import { Role } from '@/lib/generated-prisma'
 import { AdminDashboard } from '@/components/dashboard/admin-dashboard'
 import { TeacherDashboard } from '@/components/dashboard/teacher-dashboard'
 import { AccountantDashboard } from '@/components/dashboard/accountant-dashboard'

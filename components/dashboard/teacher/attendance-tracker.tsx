@@ -11,8 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Papa from "papaparse"
 import { Input } from "@/components/ui/input"
 import { SubjectSelector } from "./subject-selector"
+import { Student, Attendance } from "@/lib/generated-prisma"
 
-// ... types ...
+export type StudentWithAttendance = Student & {
+    attendances: Attendance[]
+}
 
 export function AttendanceTracker({ 
     students, 
