@@ -259,4 +259,6 @@ model Timetable {
   room      String?  // Room number/name
   grade     String
   section   String
-  createdAt DateTime @default(now(
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
