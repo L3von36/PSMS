@@ -264,11 +264,16 @@ export async function sendCommunication(prevState: any, formData: FormData) {
 
         const communications = []
         const { sendTelegramMessage, isTelegramConfigured } = await import("@/lib/telegram")
+        const { sendSMS } = await import("@/lib/sms")
 
         for (const parent of parents as any[]) {
             if (type === "Telegram") {
                 if (isTelegramConfigured() && parent.telegramChatId) {
                     await sendTelegramMessage(parent.telegramChatId, `${subject ? `*${subject}*\n\n` : ''}${content}`)
+                }
+            } else if (type === "SMS") {
+                if (parent.phone) {
+                    await sendSMS(parent.phone, `${subject ? `${subject}: ` : ''}${content}`)
                 }
             }
 

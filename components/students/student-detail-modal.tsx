@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { generateReportCardPDF } from '@/lib/pdf-utils'
 import { calculateEthiopianLetter } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { PerformanceTrends } from '../performance-trends'
 
 type Student = {
   id: string
@@ -247,7 +248,18 @@ export function StudentDetailModal({
           )}
 
           {activeTab === 'grades' && (
-            <div className="space-y-3">
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-semibold mb-3">Performance Trends</h4>
+                <div className="p-4 border rounded-xl bg-muted/30">
+                  <PerformanceTrends data={[
+                      { name: 'CA 1', score: 85 },
+                      { name: 'CA 2', score: 78 },
+                      { name: 'Midterm', score: 92 },
+                      { name: 'Final', score: 88 },
+                  ]} />
+                </div>
+              </div>
               <p className="text-sm text-muted-foreground mb-4">Grade history (Weighted 40/20/40)</p>
               {(student.grades || []).length === 0 ? (
                 <div className="text-center py-8 border rounded-lg bg-muted/20">

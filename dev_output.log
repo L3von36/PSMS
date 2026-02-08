@@ -9,14 +9,49 @@
 
 ✓ Starting...
 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-✓ Ready in 1762ms
+✓ Ready in 1500ms
 [31m[auth][error][0m MissingSecret: Please define a `secret`. Read more at https://errors.authjs.dev#missingsecret
     at assertConfig (/app/.next/dev/server/edge/chunks/97170_@auth_core_8e60f9f3._.js:513:16)
     at Auth (/app/.next/dev/server/edge/chunks/97170_@auth_core_8e60f9f3._.js:5331:242)
-○ Compiling /login ...
- HEAD /login 200 in 4.7s (compile: 3.7s, proxy.ts: 140ms, render: 843ms)
+ GET /login 200 in 2.3s (compile: 1337ms, proxy.ts: 133ms, render: 871ms)
 [31m[auth][error][0m MissingSecret: Please define a `secret`. Read more at https://errors.authjs.dev#missingsecret
     at assertConfig (/app/.next/dev/server/edge/chunks/97170_@auth_core_8e60f9f3._.js:513:16)
     at Auth (/app/.next/dev/server/edge/chunks/97170_@auth_core_8e60f9f3._.js:5331:242)
- GET /login 200 in 125ms (compile: 8ms, proxy.ts: 14ms, render: 103ms)
-[?25h
+[31m[auth][error][0m MissingSecret: Please define a `secret`. Read more at https://errors.authjs.dev#missingsecret
+    at assertConfig (/app/.next/dev/server/chunks/ssr/node_modules_5c2ad228._.js:527:16)
+    at Auth (/app/.next/dev/server/chunks/ssr/node_modules_5c2ad228._.js:12722:234)
+    at async signIn (/app/.next/dev/server/chunks/ssr/node_modules_5c2ad228._.js:19837:17)
+    at async action (/app/.next/dev/server/chunks/ssr/[root-of-the-server]__267dcd86._.js:8663:9)
+    at async executeActionAndPrepareForRender (/app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:3803)
+    at async /app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:36:1109
+    at async handleAction (/app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:34:23616)
+    at async renderToHTMLOrFlightImpl (/app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:41:42130)
+    at async doRender (/app/.next/dev/server/chunks/ssr/node_modules_next_dist_6c3f6d39._.js:2970:28)
+    at async AppPageRouteModule.handleResponse (/app/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:43:64241)
+    at async handleResponse (/app/.next/dev/server/chunks/ssr/node_modules_next_dist_6c3f6d39._.js:3176:32)
+    at async Module.handler (/app/.next/dev/server/chunks/ssr/node_modules_next_dist_6c3f6d39._.js:3547:20)
+    at async DevServer.renderToResponseWithComponentsImpl (/app/node_modules/next/dist/server/base-server.js:1442:9)
+    at async DevServer.renderPageComponent (/app/node_modules/next/dist/server/base-server.js:1494:24)
+    at async DevServer.renderToResponseImpl (/app/node_modules/next/dist/server/base-server.js:1544:32)
+    at async DevServer.pipeImpl (/app/node_modules/next/dist/server/base-server.js:1038:25)
+    at async NextNodeServer.handleCatchallRenderRequest (/app/node_modules/next/dist/server/next-server.js:395:17)
+    at async DevServer.handleRequestImpl (/app/node_modules/next/dist/server/base-server.js:929:17)
+    at async /app/node_modules/next/dist/server/dev/next-dev-server.js:387:20
+    at async Span.traceAsyncFn (/app/node_modules/next/dist/trace/trace.js:157:20)
+    at async DevServer.handleRequest (/app/node_modules/next/dist/server/dev/next-dev-server.js:383:24)
+    at async invokeRender (/app/node_modules/next/dist/server/lib/router-server.js:248:21)
+    at async handleRequest (/app/node_modules/next/dist/server/lib/router-server.js:447:24)
+    at async requestHandlerImpl (/app/node_modules/next/dist/server/lib/router-server.js:496:13)
+    at async Server.requestListener (/app/node_modules/next/dist/server/lib/start-server.js:226:13)
+[31m[auth][error][0m MissingSecret: Please define a `secret`. Read more at https://errors.authjs.dev#missingsecret
+    at assertConfig (/app/.next/dev/server/chunks/97170_@auth_core_24f87d1e._.js:513:16)
+    at Auth (/app/.next/dev/server/chunks/97170_@auth_core_24f87d1e._.js:5330:236)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async AppRouteRouteModule.do (/app/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)
+ GET /api/auth/callback/credentials 500 in 1929ms (compile: 1903ms, render: 26ms)
+ POST /login 303 in 2.0s (compile: 7ms, proxy.ts: 15ms, render: 1982ms)
+[31m[auth][error][0m MissingSecret: Please define a `secret`. Read more at https://errors.authjs.dev#missingsecret
+    at assertConfig (/app/.next/dev/server/chunks/97170_@auth_core_24f87d1e._.js:513:16)
+    at Auth (/app/.next/dev/server/chunks/97170_@auth_core_24f87d1e._.js:5330:236)
+    at async AppRouteRouteModule.do (/app/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.dev.js:5:37866)
+ GET /api/auth/callback/credentials? 500 in 29ms (compile: 22ms, render: 7ms)
