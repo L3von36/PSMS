@@ -5,6 +5,8 @@ import { AdminDashboard } from '@/components/dashboard/admin-dashboard'
 import { TeacherDashboard } from '@/components/dashboard/teacher-dashboard'
 import { AccountantDashboard } from '@/components/dashboard/accountant-dashboard'
 import { RegistrarDashboard } from '@/components/dashboard/registrar-dashboard'
+import { NoticeBoard } from '@/components/dashboard/notice-board'
+import { getNotices } from '@/actions/notice'
 import { redirect } from 'next/navigation'
 
 async function getDashboardMetrics(schoolId?: string) {
@@ -54,22 +56,24 @@ export default async function DashboardPage() {
   const role = session?.user?.role || 'STUDENT'
   const schoolId = (session?.user as any)?.schoolId
   const metrics = await getDashboardMetrics(schoolId)
+  const notices = await getNotices()
+  const canPostNotices = ['ADMIN', 'DIRECTOR', 'UNIT_LEADER'].includes(role as string)
 
   // Render dashboard based on role
   switch (role as any) {
     case 'ADMIN':
     case 'DIRECTOR':
-      return <AdminDashboard metrics={metrics} />
+      return <AdminDashboard metrics={metrics} notices={notices} canPost={canPostNotices} />
     
     case 'TEACHER':
     case 'UNIT_LEADER':
-      return <TeacherDashboard metrics={metrics} />
+      return <TeacherDashboard metrics={metrics} notices={notices} canPost={canPostNotices} />
     
     case 'ACCOUNTANT':
-      return <AccountantDashboard metrics={metrics} />
+      return <AccountantDashboard metrics={metrics} notices={notices} canPost={canPostNotices} />
     
     case 'REGISTRAR':
-      return <RegistrarDashboard metrics={metrics} />
+      return <RegistrarDashboard metrics={metrics} notices={notices} canPost={canPostNotices} />
     
     case 'PARENT':
     case 'STUDENT':
@@ -148,10 +152,14 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+
+          <div className="mt-8">
+            <NoticeBoard initialNotices={notices} canPost={canPostNotices} />
+          </div>
         </div>
       )
     
     default:
-      return <AdminDashboard metrics={metrics} />
+      return <AdminDashboard metrics={metrics} notices={notices} canPost={canPostNotices} />
   }
 }

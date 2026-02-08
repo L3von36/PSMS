@@ -1,9 +1,10 @@
 import { DollarSign, CreditCard, AlertCircle, TrendingUp } from 'lucide-react'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
+import { NoticeBoard } from '@/components/dashboard/notice-board'
 import { Suspense } from 'react'
 
-export function AccountantDashboard({ metrics }: { metrics: any }) {
+export function AccountantDashboard({ metrics, notices, canPost }: { metrics: any, notices: any[], canPost: boolean }) {
   return (
     <div className="space-y-8">
       <div>
@@ -28,6 +29,10 @@ export function AccountantDashboard({ metrics }: { metrics: any }) {
             <RecentActivity payments={metrics.recentPayments} showGrades={false} />
            </div>
         </div>
+      </div>
+
+      <div className="mt-8">
+        <NoticeBoard initialNotices={notices} canPost={canPost} />
       </div>
     </div>
   )

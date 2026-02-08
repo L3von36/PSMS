@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { jsPDF } from "jspdf"
 
-export function IDCardGenerator({ students }: { students: any[] }) {
+export function IDCardGenerator({ students, schoolName }: { students: any[], schoolName: string }) {
     const generatePDF = (student: any) => {
         const doc = new jsPDF({
             orientation: "landscape",
@@ -13,7 +13,7 @@ export function IDCardGenerator({ students }: { students: any[] }) {
         })
 
         doc.setFontSize(12)
-        doc.text("Antigravity PSMS", 42.5, 10, { align: "center" })
+        doc.text(schoolName, 42.5, 10, { align: "center" })
         doc.setFontSize(10)
         doc.text("STUDENT ID CARD", 42.5, 15, { align: "center" })
 

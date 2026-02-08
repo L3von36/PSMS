@@ -1,9 +1,10 @@
 import { Users, UserPlus, BookOpen, ClipboardList } from 'lucide-react'
 import { EnrollmentChart } from '@/components/dashboard/enrollment-chart'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
+import { NoticeBoard } from '@/components/dashboard/notice-board'
 import { Suspense } from 'react'
 
-export function RegistrarDashboard({ metrics }: { metrics: any }) {
+export function RegistrarDashboard({ metrics, notices, canPost }: { metrics: any, notices: any[], canPost: boolean }) {
   return (
     <div className="space-y-8">
       <div>
@@ -26,6 +27,10 @@ export function RegistrarDashboard({ metrics }: { metrics: any }) {
           <h3 className="font-semibold mb-4">Latest Enrollments</h3>
           <RecentActivity grades={metrics.recentGrades} showPayments={false} />
         </div>
+      </div>
+
+      <div className="mt-8">
+        <NoticeBoard initialNotices={notices} canPost={canPost} />
       </div>
     </div>
   )

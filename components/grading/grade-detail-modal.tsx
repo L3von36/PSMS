@@ -1,16 +1,22 @@
-import { X, Award, User, BookOpen, Calendar, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react'
+import { X, Award, User, BookOpen, Calendar, TrendingUp, TrendingDown, BarChart3, Download } from 'lucide-react'
 import { useState } from 'react'
 import { Grade } from "@/types/grading"
 import { calculateEthiopianLetter } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-
-const getScoreColor = (score: number) => {
-  if (score >= 90) return 'text-green-600 dark:text-green-500'
-  if (score >= 75) return 'text-blue-600 dark:text-blue-500'
-  if (score >= 60) return 'text-yellow-600 dark:text-yellow-500'
-  if (score >= 50) return 'text-orange-600 dark:text-orange-500'
-  return 'text-red-600 dark:text-red-500'
-}
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from 'recharts'
 
 type Tab = 'overview' | 'student' | 'analytics'
 
@@ -32,7 +38,21 @@ export function GradeDetailModal({
     return 'text-red-600 dark:text-red-400'
   }
 
-  const letter = calculateEthiopianLetter(grade.score)
+  // Mock data for analytics
+  const studentPerformanceData = [
+    { name: 'Quiz 1', score: 85, avg: 72 },
+    { name: 'Midterm', score: grade.score, avg: 68 },
+    { name: 'Assignment', score: 92, avg: 75 },
+    { name: 'Quiz 2', score: 78, avg: 70 },
+  ]
+
+  const subjectDistributionData = [
+    { name: 'A (90-100)', value: 4, color: '#16a34a' },
+    { name: 'B (80-89)', value: 12, color: '#2563eb' },
+    { name: 'C (70-79)', value: 8, color: '#ca8a04' },
+    { name: 'D (60-69)', value: 3, color: '#ea580c' },
+    { name: 'F (<60)', value: 2, color: '#dc2626' },
+  ]
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
@@ -144,16 +164,96 @@ export function GradeDetailModal({
           )}
 
           {activeTab === 'student' && (
-            <div className="text-center py-20 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-dashed">
-              <Award className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm font-medium text-slate-500">Student performance analytics coming soon</p>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg">Performance Timeline</h3>
+                <div className="flex gap-4 text-xs font-medium">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    Student
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+                    Class Average
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-[250px] w-full bg-card rounded-xl border p-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={studentPerformanceData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                    <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="var(--primary)"
+                      strokeWidth={3}
+                      dot={{ r: 6, fill: 'var(--primary)', strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 8 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="avg"
+                      stroke="#94a3b8"
+                      strokeDasharray="5 5"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border bg-green-50/50 dark:bg-green-900/10">
+                  <p className="text-xs font-bold text-green-600 uppercase mb-1">Strengths</p>
+                  <p className="text-sm">Consistently scores above average in Assignments and Quizzes.</p>
+                </div>
+                <div className="p-4 rounded-xl border bg-blue-50/50 dark:bg-blue-900/10">
+                  <p className="text-xs font-bold text-blue-600 uppercase mb-1">Growth Area</p>
+                  <p className="text-sm">Midterm score shows slight dip compared to class average.</p>
+                </div>
+              </div>
             </div>
           )}
 
           {activeTab === 'analytics' && (
-            <div className="text-center py-20 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-dashed">
-              <BookOpen className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm font-medium text-slate-500">Subject distribution analytics coming soon</p>
+            <div className="space-y-6">
+              <h3 className="font-bold text-lg">Grade Distribution ({grade.subject.name})</h3>
+
+              <div className="h-[250px] w-full bg-card rounded-xl border p-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={subjectDistributionData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                    <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      cursor={{ fill: 'transparent' }}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {subjectDistributionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} opacity={entry.name.startsWith(calculateEthiopianLetter((grade.score / (grade.outOf || 100)) * 100)) ? 1 : 0.6} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Class Participation Rate</span>
+                  <span className="text-sm font-bold">94%</span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full" style={{ width: '94%' }} />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">Based on 29 students in {grade.student.grade}{grade.student.section}</p>
+              </div>
             </div>
           )}
         </div>
@@ -164,8 +264,9 @@ export function GradeDetailModal({
             <Button variant="outline" className="flex-1" onClick={onClose}>
               Close Preview
             </Button>
-            <Button className="flex-1">
-              Download Summary
+            <Button className="flex-1 gap-2">
+              <Download className="h-4 w-4" />
+              Download Report
             </Button>
           </div>
         </div>

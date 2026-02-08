@@ -1,7 +1,7 @@
 import { TeacherOverview } from "@/components/dashboard/teacher/teacher-overview"
 
-export async function TeacherDashboard({ metrics }: { metrics: any }) {
-  return <TeacherOverview metrics={metrics} />
+export async function TeacherDashboard({ metrics, notices, canPost }: { metrics: any, notices: any[], canPost: boolean }) {
+  return <TeacherOverview metrics={metrics} notices={notices} canPost={canPost} />
 }
 
 function MetricCard({ title, value, icon: Icon, trend, trendUp }: any) {

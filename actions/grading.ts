@@ -144,6 +144,38 @@ export async function getGradingData() {
     }
 }
 
+async function verifyGradingPermission(userId: string, role: string, schoolId: string, subjectId: string, studentIds: string[]) {
+    if (['ADMIN', 'DIRECTOR', 'REGISTRAR', 'UNIT_LEADER'].includes(role)) return true
+
+    if (role === 'TEACHER') {
+        const staff = await prisma.staff.findUnique({
+            where: { userId },
+            include: { assignments: true }
+        })
+
+        if (!staff) return false
+
+        // Check if teacher is assigned to this subject
+        const isAssignedSubject = staff.assignments.some(a => a.subjectId === subjectId)
+
+        // For students, check if they are in the classes the teacher is assigned to
+        const students = await prisma.student.findMany({
+            where: {
+                id: { in: studentIds },
+                schoolId: schoolId
+            }
+        })
+
+        const allStudentsInAssignedClasses = students.every(student =>
+            staff.assignments.some(a => a.grade === student.grade && a.section === student.section)
+        )
+
+        return isAssignedSubject && allStudentsInAssignedClasses
+    }
+
+    return false
+}
+
 export async function bulkRecordGrades(data: {
     grades: { studentId: string, score: number }[],
     subjectId: string,
@@ -155,6 +187,18 @@ export async function bulkRecordGrades(data: {
     const session = await auth()
     if (!session?.user) throw new Error("Unauthorized")
     const schoolId = (session.user as any).schoolId
+    const role = session.user.role
+    const userId = session.user.id
+
+    const hasPermission = await verifyGradingPermission(
+        userId,
+        role as string,
+        schoolId as string,
+        data.subjectId,
+        data.grades.map(g => g.studentId)
+    )
+
+    if (!hasPermission) throw new Error("You don't have permission to record grades for these students/subject.")
 
     try {
         await prisma.$transaction(
@@ -209,6 +253,20 @@ export async function recordGrade(prevState: any, formData: FormData) {
         }
     }
 
+    const schoolId = (session.user as any).schoolId
+    const role = session.user.role
+    const userId = session.user.id
+
+    const hasPermission = await verifyGradingPermission(
+        userId,
+        role as string,
+        schoolId as string,
+        validatedFields.data.subjectId,
+        [validatedFields.data.studentId]
+    )
+
+    if (!hasPermission) return { success: false, message: "Permission denied." }
+
     try {
         await prisma.grade.create({
             data: {
@@ -219,7 +277,7 @@ export async function recordGrade(prevState: any, formData: FormData) {
                 category: validatedFields.data.category,
                 term: validatedFields.data.term,
                 academicYear: validatedFields.data.academicYear,
-                schoolId: (session.user as any).schoolId
+                schoolId: schoolId
             }
         })
         revalidatePath("/dashboard/grades")
