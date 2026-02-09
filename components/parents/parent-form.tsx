@@ -70,7 +70,7 @@ export function ParentForm({
       {parent && <input type="hidden" name="parentId" value={parent.id} />}
       <input type="hidden" name="studentIds" value={JSON.stringify(selectedStudents)} />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">First Name</label>
           <input
@@ -93,7 +93,7 @@ export function ParentForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">Primary Phone</label>
           <input
@@ -129,7 +129,7 @@ export function ParentForm({
         {state?.errors?.email && <p className="text-red-500 text-xs mt-1">{state.errors.email[0]}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">WhatsApp</label>
           <input
@@ -150,7 +150,7 @@ export function ParentForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">Occupation</label>
           <input
@@ -171,7 +171,7 @@ export function ParentForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">National ID</label>
           <input

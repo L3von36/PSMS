@@ -165,7 +165,7 @@ export function StudentDetailModal({
                     <Award className="h-4 w-4 text-blue-600" />
                     National Exam Status
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-muted-foreground uppercase font-semibold">Candidacy</p>
                       <Badge variant={student.isNationalExamCandidate ? "default" : "outline"} className="mt-1">

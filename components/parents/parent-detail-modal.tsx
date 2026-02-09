@@ -79,7 +79,7 @@ export function ParentDetailModal({ parent, onClose }: { parent: Parent; onClose
               {/* Contact Information */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex items-center gap-3 p-3 rounded-lg border">
                     <Phone className="h-5 w-5 text-blue-600" />
                     <div>
@@ -130,7 +130,7 @@ export function ParentDetailModal({ parent, onClose }: { parent: Parent; onClose
               {(parent.occupation || parent.employer) && (
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Professional Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {parent.occupation && (
                       <div className="flex items-center gap-3 p-3 rounded-lg border">
                         <Briefcase className="h-5 w-5 text-purple-600" />

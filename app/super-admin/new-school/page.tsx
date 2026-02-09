@@ -23,7 +23,7 @@ export default function NewSchoolPage() {
     const [state, action] = useActionState(handleAction, { success: false, message: "", errors: {} })
 
     return (
-        <div className="p-8 max-w-2xl mx-auto">
+        <div className="p-4 md:p-8 max-w-2xl mx-auto">
             <Card>
                 <CardHeader>
                     <CardTitle>Register New School</CardTitle>

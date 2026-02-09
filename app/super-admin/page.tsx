@@ -10,7 +10,7 @@ export default async function SuperAdminPage() {
     const schools = await getSchools()
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-4xl font-bold">Super Admin Panel</h1>

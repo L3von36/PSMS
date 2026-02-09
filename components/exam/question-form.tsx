@@ -35,7 +35,7 @@ export function QuestionForm({ exams }: { exams: any[] }) {
                 {state?.errors?.text && <p className="text-red-500 text-xs mt-1">{state.errors.text[0]}</p>}
             </div>
             
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                     <select name="type" className="w-full rounded border p-2 dark:bg-gray-700">
                         <option value="ShortAnswer">Short Answer</option>

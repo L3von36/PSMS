@@ -199,7 +199,7 @@ export function EnhancedParentTable({
         />
       </div>
 
-      <div className="rounded-lg border">
+      <div className="rounded-lg border overflow-x-auto">
         <table className="w-full">
           <thead className="border-b bg-muted/50">
             {table.getHeaderGroups().map(headerGroup => (
