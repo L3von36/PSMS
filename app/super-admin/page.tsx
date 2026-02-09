@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { PlusCircle, School as SchoolIcon, Users, GraduationCap } from "lucide-react"
 import Link from "next/link"
 
+export const dynamic = 'force-dynamic'
+
 export default async function SuperAdminPage() {
     const schools = await getSchools()
 

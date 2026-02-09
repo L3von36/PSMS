@@ -1,6 +1,8 @@
 import { getExamData } from "@/actions/exam"
 import { ExamsPageClient } from "@/components/exams/exams-page-client"
 
+export const dynamic = 'force-dynamic'
+
 export default async function ExamPage() {
   const { exams, questions, subjects } = await getExamData()
   
