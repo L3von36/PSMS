@@ -27,10 +27,12 @@ export function QuickActionsCard() {
                 Enter Grades
             </Button>
         </Link>
-        <Button variant="outline" className="w-full justify-start gap-2 h-12" disabled title="Coming Soon">
-            <MessageSquare className="h-4 w-4 text-amber-600" />
-            Message Parents
-        </Button>
+        <Link href="/dashboard/notices">
+            <Button variant="outline" className="w-full justify-start gap-2 h-12">
+                <MessageSquare className="h-4 w-4 text-amber-600" />
+                Message Parents
+            </Button>
+        </Link>
       </CardContent>
     </Card>
   )

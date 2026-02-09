@@ -4,8 +4,9 @@ import { getTeacherClasses, getTeacherSchedule, seedTeacherSchedule } from "@/ac
 import { MyClassesCard } from "./my-classes-card"
 import { QuickActionsCard } from "./quick-actions"
 import { ScheduleCard } from "./schedule-card"
+import { NoticeBoard } from "../notice-board"
 
-export async function TeacherOverview({ metrics }: { metrics: any }) {
+export async function TeacherOverview({ metrics, notices, canPost }: { metrics: any, notices: any[], canPost: boolean }) {
     // Basic seeding for dev environment to ensure data
     await seedTeacherSchedule()
     
@@ -28,6 +29,7 @@ export async function TeacherOverview({ metrics }: { metrics: any }) {
 
             <div className="grid gap-6 md:grid-cols-2">
                <ScheduleCard schedule={schedule} />
+               <NoticeBoard initialNotices={notices} canPost={canPost} />
             </div>
         </div>
     )

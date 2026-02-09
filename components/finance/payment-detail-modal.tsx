@@ -194,8 +194,12 @@ export function PaymentDetailModal({
             <button className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
               Edit Payment
             </button>
-            <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors">
-              Send Receipt
+            <button
+              onClick={handlePrintReceipt}
+              className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Print Receipt
             </button>
             <button className="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
               Delete

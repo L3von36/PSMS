@@ -35,7 +35,7 @@ export function FeeForm() {
           {state?.errors?.name && <p className="text-red-500 text-xs mt-1">{state.errors.name[0]}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium text-muted-foreground mb-1 block">Amount (ETB)</label>
             <input 

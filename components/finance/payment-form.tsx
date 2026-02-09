@@ -12,7 +12,7 @@ export function PaymentForm() {
 
   useEffect(() => {
     getStudents().then(result => {
-      if (result.success) setStudents(result.students)
+       if (result.success && result.students) setStudents(result.students)
     })
   }, [])
 

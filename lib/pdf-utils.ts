@@ -13,6 +13,7 @@ export type ReportCardData = {
     studentId: string
     grade: string
     term: string
+    academicYear?: string
     photoUrl?: string | null
     grades: {
         subject: string

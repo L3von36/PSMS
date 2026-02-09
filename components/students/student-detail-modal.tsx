@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { generateReportCardPDF } from '@/lib/pdf-utils'
 import { calculateEthiopianLetter } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { PerformanceTrends } from '../performance-trends'
 
 type Student = {
   id: string
@@ -21,6 +22,7 @@ type Student = {
   nationalExamId?: string | null
   nationalExamResult?: number | null
   grades?: any[]
+  attendances?: any[]
   createdAt: Date
 }
 
@@ -44,11 +46,11 @@ export function StudentDetailModal({
       grade: student.grade,
       term: 'Term 1, 2024',
       grades: [
-        { subject: 'Mathematics', score: 85, grade: 'A' },
-        { subject: 'Physics', score: 92, grade: 'A+' },
-        { subject: 'Chemistry', score: 78, grade: 'B' },
-        { subject: 'English', score: 88, grade: 'A' },
-        { subject: 'Biology', score: 91, grade: 'A' },
+        { subject: 'Mathematics', score: 85, grade: 'A', category: 'Final' },
+        { subject: 'Physics', score: 92, grade: 'A+', category: 'Final' },
+        { subject: 'Chemistry', score: 78, grade: 'B', category: 'Final' },
+        { subject: 'English', score: 88, grade: 'A', category: 'Final' },
+        { subject: 'Biology', score: 91, grade: 'A', category: 'Final' },
       ],
       attendance: '95%',
       teacherComments: `${student.firstName} has been an outstanding student this term. Their participation in Physics experiments has been noteworthy. Keep up the great work!`
@@ -163,7 +165,7 @@ export function StudentDetailModal({
                     <Award className="h-4 w-4 text-blue-600" />
                     National Exam Status
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-muted-foreground uppercase font-semibold">Candidacy</p>
                       <Badge variant={student.isNationalExamCandidate ? "default" : "outline"} className="mt-1">
@@ -247,7 +249,18 @@ export function StudentDetailModal({
           )}
 
           {activeTab === 'grades' && (
-            <div className="space-y-3">
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-semibold mb-3">Performance Trends</h4>
+                <div className="p-4 border rounded-xl bg-muted/30">
+                  <PerformanceTrends data={[
+                      { name: 'CA 1', score: 85 },
+                      { name: 'CA 2', score: 78 },
+                      { name: 'Midterm', score: 92 },
+                      { name: 'Final', score: 88 },
+                  ]} />
+                </div>
+              </div>
               <p className="text-sm text-muted-foreground mb-4">Grade history (Weighted 40/20/40)</p>
               {(student.grades || []).length === 0 ? (
                 <div className="text-center py-8 border rounded-lg bg-muted/20">
@@ -305,9 +318,43 @@ export function StudentDetailModal({
           )}
 
           {activeTab === 'attendance' && (
-            <div className="text-center py-12">
-              <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Attendance tracking coming soon</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">Recent Attendance History</h3>
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  95% Overall Attendance
+                </Badge>
+              </div>
+
+              {(!student.attendances || student.attendances.length === 0) ? (
+                <div className="text-center py-12 border rounded-lg bg-muted/20">
+                    <Calendar className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">No attendance records found.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {student.attendances.map((record: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-2 w-2 rounded-full ${
+                          record.status === 'PRESENT' ? 'bg-green-500' :
+                          record.status === 'LATE' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} />
+                        <div>
+                          <p className="text-sm font-medium">{new Date(record.date).toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground">{record.remarks || 'Regular school day'}</p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className={`text-[10px] ${
+                        record.status === 'PRESENT' ? 'bg-green-100 text-green-700' :
+                        record.status === 'LATE' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {record.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

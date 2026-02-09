@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { writeFile } from "fs/promises"
 import { join } from "path"
+import { auth } from "@/lib/auth"
 
 const StudentSchema = z.object({
     firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -21,6 +22,10 @@ const StudentSchema = z.object({
 })
 
 export async function createStudent(prevState: any, formData: FormData) {
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return { success: false, message: "Unauthorized" }
+
     const data = {
         firstName: formData.get("firstName"),
         lastName: formData.get("lastName"),
@@ -48,7 +53,10 @@ export async function createStudent(prevState: any, formData: FormData) {
 
     try {
         await prisma.student.create({
-            data: validatedFields.data
+            data: {
+                ...validatedFields.data,
+                schoolId: schoolId
+            }
         })
         revalidatePath("/dashboard/students")
         return { success: true, message: "Student created successfully" }
@@ -59,6 +67,10 @@ export async function createStudent(prevState: any, formData: FormData) {
 }
 
 export async function bulkCreateStudents(students: any[]) {
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return { success: false, message: "Unauthorized" }
+
     try {
         // Simple validation for each student
         const validStudents = students.filter(s => s.firstName && s.lastName && s.grade)
@@ -75,6 +87,7 @@ export async function bulkCreateStudents(students: any[]) {
                 section: s.section ? String(s.section) : null,
                 email: s.email || null,
                 phone: s.phone || null,
+                schoolId: schoolId
             }))
         })
 
@@ -112,12 +125,12 @@ export async function uploadStudentPhoto(formData: FormData) {
     }
 }
 
-import { auth } from "@/lib/auth"
-
 export async function getStudents() {
     try {
         const session = await auth()
         if (!session?.user) return { success: false, message: "Unauthorized" }
+        const schoolId = (session.user as any).schoolId
+        if (!schoolId) return { success: true, students: [] }
 
         const role = session.user.role
         const userId = session.user.id
@@ -125,6 +138,11 @@ export async function getStudents() {
         // Admin/Director/Registrar can see all students
         if (['ADMIN', 'DIRECTOR', 'REGISTRAR'].includes(role)) {
             const students = await prisma.student.findMany({
+                where: { schoolId },
+                include: {
+                    attendances: { orderBy: { date: 'desc' }, take: 10 },
+                    grades: { orderBy: { createdAt: 'desc' }, take: 10, include: { subject: true } }
+                },
                 orderBy: { createdAt: 'desc' }
             })
             return { success: true, students }
@@ -150,7 +168,12 @@ export async function getStudents() {
 
             const students = await prisma.student.findMany({
                 where: {
+                    schoolId,
                     OR: conditions as any
+                },
+                include: {
+                    attendances: { orderBy: { date: 'desc' }, take: 10 },
+                    grades: { orderBy: { createdAt: 'desc' }, take: 10, include: { subject: true } }
                 },
                 orderBy: { createdAt: 'desc' }
             })

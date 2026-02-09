@@ -24,6 +24,8 @@ type Student = {
   phone?: string | null
   status?: string
   enrollmentHistory?: string | null
+  grades?: any[]
+  attendances?: any[]
   createdAt: Date
 }
 

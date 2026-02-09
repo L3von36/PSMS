@@ -39,7 +39,7 @@ export function EnrollmentChart() {
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '8px'
               }}
-              formatter={(value: number) => [value, 'Students']}
+              formatter={(value: any) => [value, 'Students']}
             />
             <Line 
               type="monotone" 

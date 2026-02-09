@@ -1,6 +1,8 @@
 import { getGradingData } from "@/actions/grading"
 import { GradingPageClient } from "@/components/grading/grading-page-client"
 
+export const dynamic = 'force-dynamic'
+
 export default async function GradingPage() {
   const { subjects, recentGrades, students } = await getGradingData()
   

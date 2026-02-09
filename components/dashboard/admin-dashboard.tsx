@@ -2,9 +2,10 @@ import { Users, DollarSign, GraduationCap, TrendingUp } from 'lucide-react'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
 import { EnrollmentChart } from '@/components/dashboard/enrollment-chart'
 import { RecentActivity } from '@/components/dashboard/recent-activity'
+import { NoticeBoard } from '@/components/dashboard/notice-board'
 import { Suspense } from 'react'
 
-export function AdminDashboard({ metrics }: { metrics: any }) {
+export function AdminDashboard({ metrics, notices, canPost }: { metrics: any, notices: any[], canPost: boolean }) {
   return (
     <div className="space-y-8">
       <div>
@@ -24,7 +25,14 @@ export function AdminDashboard({ metrics }: { metrics: any }) {
         <Suspense fallback={<div className="h-[300px] bg-muted animate-pulse rounded-lg" />}><EnrollmentChart /></Suspense>
       </div>
 
-      <RecentActivity payments={metrics.recentPayments} grades={metrics.recentGrades} />
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+            <RecentActivity payments={metrics.recentPayments} grades={metrics.recentGrades} />
+        </div>
+        <div>
+            <NoticeBoard initialNotices={notices} canPost={canPost} />
+        </div>
+      </div>
     </div>
   )
 }

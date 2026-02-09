@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { auth } from "@/lib/auth"
 
 const FeeSchema = z.object({
     name: z.string().min(3, "Fee name must be at least 3 characters"),
@@ -16,6 +17,10 @@ const PaymentSchema = z.object({
 })
 
 export async function createFeeStructure(prevState: any, formData: FormData) {
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return { success: false, message: "Unauthorized" }
+
     const validatedFields = FeeSchema.safeParse({
         name: formData.get("name"),
         amount: formData.get("amount"),
@@ -36,6 +41,7 @@ export async function createFeeStructure(prevState: any, formData: FormData) {
                 title: validatedFields.data.name, // Map 'name' to 'title' for database
                 amount: validatedFields.data.amount,
                 gradeLevel: validatedFields.data.gradeLevel,
+                schoolId: schoolId,
             }
         })
         revalidatePath("/dashboard/finance")
@@ -46,6 +52,10 @@ export async function createFeeStructure(prevState: any, formData: FormData) {
 }
 
 export async function recordPayment(prevState: any, formData: FormData) {
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return { success: false, message: "Unauthorized" }
+
     const validatedFields = PaymentSchema.safeParse({
         studentId: formData.get("studentId"),
         amount: parseFloat(formData.get("amount") as string),
@@ -66,6 +76,7 @@ export async function recordPayment(prevState: any, formData: FormData) {
                 ...validatedFields.data,
                 status: "PAID",
                 feeId: formData.get("feeId") as string || null,
+                schoolId: schoolId,
             }
         })
         revalidatePath("/dashboard/finance")
@@ -76,9 +87,13 @@ export async function recordPayment(prevState: any, formData: FormData) {
 }
 
 export async function generateMonthlyInvoices(monthName: string) {
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return { success: false, message: "Unauthorized" }
+
     try {
-        const students = await prisma.student.findMany()
-        const feeStructures = await prisma.feeStructure.findMany()
+        const students = await prisma.student.findMany({ where: { schoolId } })
+        const feeStructures = await prisma.feeStructure.findMany({ where: { schoolId } })
 
         let count = 0
         for (const student of students) {
@@ -106,6 +121,7 @@ export async function generateMonthlyInvoices(monthName: string) {
                         method: "AUTO_GENERATED",
                         status: "PENDING",
                         feeId: fee.id,
+                        schoolId: schoolId
                     }
                 })
                 count++
@@ -121,11 +137,17 @@ export async function generateMonthlyInvoices(monthName: string) {
 }
 
 export async function getFinanceData() {
+    const session = await auth()
+    const schoolId = (session?.user as any)?.schoolId
+    if (!schoolId) return { feeStructures: [], payments: [] }
+
     const feeStructures = await prisma.feeStructure.findMany({
+        where: { schoolId },
         orderBy: { createdAt: 'desc' }
     })
 
     const payments = await prisma.payment.findMany({
+        where: { schoolId },
         include: { student: true },
         orderBy: { createdAt: 'desc' }
     })

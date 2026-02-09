@@ -1,14 +1,22 @@
-import { auth } from "@/lib/auth"
+import NextAuth from "next-auth"
+import { authConfig } from "./lib/auth.config"
+
+const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
     const isLoggedIn = !!req.auth
-    const role = req.auth?.user?.role
+    const role = (req.auth?.user as any)?.role
     const { pathname } = req.nextUrl
 
     const isOnDashboard = pathname.startsWith('/dashboard')
+    const isOnSuperAdmin = pathname.startsWith('/super-admin')
 
-    if (isOnDashboard && !isLoggedIn) {
+    if ((isOnDashboard || isOnSuperAdmin) && !isLoggedIn) {
         return Response.redirect(new URL('/login', req.nextUrl))
+    }
+
+    if (isOnSuperAdmin && role !== 'SUPER_ADMIN') {
+        return Response.redirect(new URL('/dashboard', req.nextUrl))
     }
 
     // Role-based Access Rules

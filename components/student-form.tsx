@@ -35,7 +35,7 @@ export function StudentForm() {
         />
         <input type="hidden" name="photoUrl" value={photoUrl || ""} />
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium text-muted-foreground mb-1 block">First Name</label>
             <input 
@@ -57,7 +57,7 @@ export function StudentForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium text-muted-foreground mb-1 block">Grade</label>
             <input 
@@ -79,7 +79,7 @@ export function StudentForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium text-muted-foreground mb-1 block">Status</label>
             <select name="status" className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
@@ -113,7 +113,7 @@ export function StudentForm() {
                 <input name="isNationalExamCandidate" type="checkbox" className="rounded border-gray-300" />
                 <span className="text-sm font-medium">National Exam Candidate (Grade 8 / 12)</span>
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium text-muted-foreground mb-1 block">Exam Registration ID</label>
                 <input name="nationalExamId" placeholder="ID Number" className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@/lib/generated-prisma'
 const prisma = new PrismaClient()
 
 async function listUsers() {
@@ -13,7 +13,7 @@ async function listUsers() {
 
     console.log('\n=== ALL USERS IN DATABASE ===\n')
     users.forEach(u => {
-        console.log(`📧 ${u.email.padEnd(25)} | Role: ${u.role.padEnd(12)} | Password: ${u.password}`)
+        console.log(`📧 ${(u.email || 'N/A').padEnd(25)} | Role: ${u.role.padEnd(12)} | Password: ${u.password}`)
     })
     console.log(`\nTotal: ${users.length} users\n`)
 

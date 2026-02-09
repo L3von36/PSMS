@@ -22,7 +22,7 @@ export default async function LoginPage(props: {
 
   return (
     <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950">
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white dark:bg-gray-800 p-10 shadow-2xl border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white dark:bg-gray-800 p-4 md:p-10 shadow-2xl border border-gray-100 dark:border-gray-700 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-600 mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
